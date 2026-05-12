@@ -1,0 +1,25 @@
+{
+  "name": "work-buddy",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --filter runtime dev",
+    "mcp:gmail": "pnpm --filter tool-gmail mcp",
+    "mcp:github": "pnpm --filter tool-github mcp",
+    "mcp:correlation": "pnpm --filter tool-correlation mcp",
+    "mcp:scheduler": "pnpm --filter tool-scheduler mcp",
+    "check": "biome check",
+    "check:fix": "biome check --write",
+    "format": "biome format --write",
+    "lint": "biome lint",
+    "typecheck": "pnpm -r exec tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.15",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0"
+  }
+}

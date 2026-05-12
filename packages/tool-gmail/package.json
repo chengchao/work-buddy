@@ -1,0 +1,19 @@
+{
+  "name": "tool-gmail",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/lib.ts"
+  },
+  "bin": {
+    "wb-gmail-mcp": "./src/mcp.ts"
+  },
+  "scripts": {
+    "mcp": "tsx src/mcp.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "zod": "^3.23.0"
+  }
+}

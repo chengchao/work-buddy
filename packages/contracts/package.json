@@ -1,0 +1,12 @@
+{
+  "name": "@wb/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/events.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  }
+}
