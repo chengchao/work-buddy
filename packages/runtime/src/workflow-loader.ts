@@ -1,11 +1,7 @@
 import { readdir, readFile } from "node:fs/promises";
-import { basename, dirname, extname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { basename, extname, resolve } from "node:path";
 import matter from "gray-matter";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const WORKFLOWS_DIR =
-  process.env.WB_WORKFLOWS_DIR ?? resolve(__dirname, "..", "..", "..", "workflows");
+import { WORKFLOWS_DIR } from "./paths.ts";
 
 export type Workflow = {
   name: string;
