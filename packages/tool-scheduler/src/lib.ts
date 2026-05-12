@@ -14,7 +14,7 @@ db.exec(`
     id              TEXT PRIMARY KEY,
     event_type      TEXT NOT NULL,
     filter_json     TEXT NOT NULL,
-    resume_skill    TEXT NOT NULL,
+    resume_workflow TEXT NOT NULL,
     resume_context  TEXT NOT NULL,
     session_id      TEXT,
     expires_at      INTEGER NOT NULL,
@@ -24,18 +24,22 @@ db.exec(`
     ON pending_waits(event_type);
 `);
 
-// Safe to call against pre-existing DB files that predate session_id.
+// Idempotent migrations for DBs created by earlier scaffold versions.
 try {
   db.exec(`ALTER TABLE pending_waits ADD COLUMN session_id TEXT`);
 } catch {
   // column already exists
+}
+const cols = db.prepare(`PRAGMA table_info(pending_waits)`).all() as Array<{ name: string }>;
+if (cols.some((c) => c.name === "resume_skill")) {
+  db.exec(`ALTER TABLE pending_waits RENAME COLUMN resume_skill TO resume_workflow`);
 }
 
 export type PendingWait = {
   id: string;
   event_type: string;
   filter_json: string;
-  resume_skill: string;
+  resume_workflow: string;
   resume_context: string;
   session_id: string | null;
   expires_at: number;
@@ -46,7 +50,7 @@ export type WaitForEventArgs = {
   eventType: string;
   filter: Record<string, unknown>;
   timeoutSeconds: number;
-  resumeSkill: string;
+  resumeWorkflow: string;
   resumeContext: string;
   sessionId?: string | null;
 };
@@ -56,13 +60,13 @@ export function waitForEvent(args: WaitForEventArgs) {
   const now = Date.now();
   db.prepare(
     `INSERT INTO pending_waits
-     (id, event_type, filter_json, resume_skill, resume_context, session_id, expires_at, created_at)
+     (id, event_type, filter_json, resume_workflow, resume_context, session_id, expires_at, created_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     id,
     args.eventType,
     JSON.stringify(args.filter),
-    args.resumeSkill,
+    args.resumeWorkflow,
     args.resumeContext,
     args.sessionId ?? null,
     now + args.timeoutSeconds * 1000,

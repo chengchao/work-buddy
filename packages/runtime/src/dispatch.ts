@@ -1,6 +1,6 @@
 import * as scheduler from "tool-scheduler";
-import { runSkill } from "./agent.ts";
-import type { Skill } from "./skill-loader.ts";
+import { runWorkflow } from "./agent.ts";
+import type { Workflow } from "./workflow-loader.ts";
 
 const log = (msg: string) => process.stdout.write(`[dispatch] ${msg}\n`);
 
@@ -10,14 +10,14 @@ export type IncomingEvent = {
 };
 
 export async function dispatchEvent(
-  skills: Map<string, Skill>,
+  workflows: Map<string, Workflow>,
   event: IncomingEvent,
 ): Promise<void> {
   const matchingWaits = scheduler.findMatchingWaits(event.type, event.data);
-  const triggered = [...skills.values()].filter((s) => s.triggers.includes(event.type));
+  const triggered = [...workflows.values()].filter((w) => w.triggers.includes(event.type));
   log(
     `event ${event.type}: ${matchingWaits.length} wait(s) matched, ` +
-      `${triggered.length} skill(s) match triggers`,
+      `${triggered.length} workflow(s) match triggers`,
   );
 
   // Resume any waiting workflows. We pass resume: wait.session_id so the
@@ -25,9 +25,9 @@ export async function dispatchEvent(
   // instead of starting fresh.
   for (const wait of matchingWaits) {
     scheduler.deleteWait(wait.id);
-    const skill = skills.get(wait.resume_skill);
-    if (!skill) {
-      log(`wait ${wait.id} references unknown skill '${wait.resume_skill}'`);
+    const workflow = workflows.get(wait.resume_workflow);
+    if (!workflow) {
+      log(`wait ${wait.id} references unknown workflow '${wait.resume_workflow}'`);
       continue;
     }
     const prompt = [
@@ -40,35 +40,35 @@ export async function dispatchEvent(
       ``,
       `Continue the workflow from where you left off.`,
     ].join("\n");
-    runSkill({
-      skill,
+    runWorkflow({
+      workflow,
       userPrompt: prompt,
       resumeSessionId: wait.session_id ?? undefined,
     }).catch((e) => log(`resume failed for wait ${wait.id}: ${e.message}`));
   }
 
   // Fresh trigger-matched runs.
-  for (const skill of triggered) {
+  for (const workflow of triggered) {
     const prompt = [
       `An event of type '${event.type}' just arrived. Handle it per your instructions.`,
       ``,
       `Event payload:`,
       JSON.stringify(event, null, 2),
     ].join("\n");
-    runSkill({ skill, userPrompt: prompt }).catch((e) =>
-      log(`skill '${skill.name}' failed: ${e.message}`),
+    runWorkflow({ workflow, userPrompt: prompt }).catch((e) =>
+      log(`workflow '${workflow.name}' failed: ${e.message}`),
     );
   }
 }
 
 // Periodically fire expired waits as synthetic timeouts.
-export function startWaker(skills: Map<string, Skill>, intervalMs = 30_000) {
+export function startWaker(workflows: Map<string, Workflow>, intervalMs = 30_000) {
   const tick = () => {
     const expired = scheduler.findExpiredWaits();
     for (const wait of expired) {
       scheduler.deleteWait(wait.id);
-      const skill = skills.get(wait.resume_skill);
-      if (!skill) continue;
+      const workflow = workflows.get(wait.resume_workflow);
+      if (!workflow) continue;
       const prompt = [
         `[WAIT TIMED OUT]`,
         `You previously scheduled a wait with this context:`,
@@ -78,8 +78,8 @@ export function startWaker(skills: Map<string, Skill>, intervalMs = 30_000) {
         `proceed — close out the workflow, retry, escalate, or do nothing.`,
       ].join("\n");
       log(`firing timeout for wait ${wait.id}`);
-      runSkill({
-        skill,
+      runWorkflow({
+        workflow,
         userPrompt: prompt,
         resumeSessionId: wait.session_id ?? undefined,
       }).catch((e) => log(`timeout-resume failed: ${e.message}`));

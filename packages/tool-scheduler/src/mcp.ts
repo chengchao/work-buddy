@@ -18,7 +18,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
         "needs to react to something that happens later (e.g. 'when this issue closes,",
         "notify the user'). The wait persists across process restarts.",
         "After calling this tool, end your turn — the runtime will re-invoke the",
-        "skill with the resume_context when the event arrives or the timeout expires.",
+        "workflow with the resume_context when the event arrives or the timeout expires.",
       ].join(" "),
       inputSchema: {
         type: "object",
@@ -40,9 +40,10 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
             minimum: 60,
             maximum: 60 * 60 * 24 * 90,
           },
-          resume_skill: {
+          resume_workflow: {
             type: "string",
-            description: "The skill file (e.g. 'email-handler') to re-invoke when the wait fires.",
+            description:
+              "The workflow file (e.g. 'email-handler') to re-invoke when the wait fires.",
           },
           resume_context: {
             type: "string",
@@ -50,7 +51,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
               "A short note to your future self explaining what was scheduled and what to do when resumed. The runtime will replay this as a user message.",
           },
         },
-        required: ["event_type", "filter", "timeout_seconds", "resume_skill", "resume_context"],
+        required: ["event_type", "filter", "timeout_seconds", "resume_workflow", "resume_context"],
       },
     },
     {
@@ -70,7 +71,7 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
         eventType: args.event_type as string,
         filter: (args.filter as Record<string, unknown>) ?? {},
         timeoutSeconds: args.timeout_seconds as number,
-        resumeSkill: args.resume_skill as string,
+        resumeWorkflow: args.resume_workflow as string,
         resumeContext: args.resume_context as string,
       });
       break;

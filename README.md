@@ -1,13 +1,13 @@
 # work-buddy
 
-A skill-based agent runtime. Workflows are markdown files; tools are MCP servers; the agent (Claude Opus 4.7) reads a skill, calls tools, and can durably wait for external events.
+An agent runtime. Workflows are markdown files; tools are MCP servers; Agent SDK Skills carry reusable domain knowledge. The agent (Claude Opus 4.7) reads a workflow, loads relevant Skills on demand, calls tools, and can durably wait for external events.
 
 ## Architecture
 
 ```
               ┌──────────────────┐
 HTTP events ─▶│      runtime      │
-              │ ─ skill loader    │   query() + mcpServers config
+              │ ─ workflow loader │   query() + mcpServers config
               │ ─ event router    │ ──────────────────────────▶ tool-gmail (stdio)
               │ ─ Claude Agent SDK│ ──────────────────────────▶ tool-github (stdio)
               │ ─ waker (timer)   │ ──────────────────────────▶ tool-correlation (stdio)
@@ -18,12 +18,13 @@ HTTP events ─▶│      runtime      │
                                                          correlation.db
 ```
 
-- **Skills** (`skills/*.md`) define triggers, tool allowlist, and prose instructions.
+- **Workflows** (`workflows/*.md`) define triggers, an allowed tool list, optional Agent SDK Skills, and prose instructions. Each workflow is the system prompt the agent runs against when its trigger fires.
 - **Tools** are MCP servers under `packages/tool-*/`. Gmail/GitHub/Correlation run as stdio subprocesses spawned by the Agent SDK per query. Scheduler is in-process via `createSdkMcpServer`.
+- **Agent SDK Skills** (`.claude/skills/<name>/SKILL.md`) are reusable knowledge modules the model loads on demand based on each Skill's description. They are distinct from workflows: a workflow is gated by an event trigger and is loaded eagerly as the system prompt; a Skill is gated by task relevance and is loaded by the model when needed.
 - **Scheduler** is the engine reified as a tool. `wait_for_event` persists a pending wait in SQLite (with the originating session ID); the runtime resumes the same session when a matching event arrives.
 - **Correlation** owns the mapping table from GitHub issues to source threads + users.
 
-The agent loop is owned by `@anthropic-ai/claude-agent-sdk` (`query()`). The runtime translates skill frontmatter (`tools: [send_reply, ...]`) into the SDK's MCP-prefixed `allowedTools` (`mcp__gmail__send_reply`, …).
+The agent loop is owned by `@anthropic-ai/claude-agent-sdk` (`query()`). The runtime translates workflow frontmatter (`tools: [send_reply, ...]`) into the SDK's MCP-prefixed `allowedTools` (`mcp__gmail__send_reply`, …), and passes the workflow's `skills:` list to the SDK's Skills loader.
 
 ## Setup
 
@@ -73,12 +74,12 @@ Watch the runtime logs. You should see:
 - `[agent] tool link(...)`
 - `[agent] tool send_reply(...)`
 - `[agent] tool wait_for_event(...)`
-- `[agent] skill 'email-handler' completed (end_turn)`
+- `[agent] workflow 'email-handler' done`
 
-The agent has paused waiting for the issue to close. Inspect the pending wait via SQLite:
+The agent has paused waiting for the issue to close. Inspect the pending wait:
 
 ```sh
-sqlite3 data/scheduler.db "SELECT id, event_type, resume_context FROM pending_waits"
+sqlite3 data/scheduler.db "SELECT id, event_type, resume_workflow, resume_context FROM pending_waits"
 ```
 
 Now fire the close event with the issue URL the agent created (check tool-github logs — issues are numbered starting at 101):
@@ -102,8 +103,11 @@ You should see the agent resume, look up the correlation, and call `send_reply` 
 
 ```
 work-buddy/
-├── skills/
-│   └── email-handler.md              # workflow definitions
+├── workflows/
+│   └── email-handler.md              # event-triggered workflow definitions
+├── .claude/skills/
+│   └── writing-github-issues/        # Agent SDK Skill (loaded by model on demand)
+│       └── SKILL.md
 ├── packages/
 │   ├── contracts/                    # zod event schemas
 │   ├── tool-gmail/                   # MCP server + lib (stubbed)
@@ -143,15 +147,43 @@ Triggers normalize provider-specific events into the schemas in `packages/contra
 
 For Gmail watch and Discord gateway, run them as separate processes that POST to the runtime. They aren't included in the scaffold.
 
-## Adding a skill
+## Adding a workflow
 
-Drop a new `.md` file in `skills/` with frontmatter listing triggers and an allowed tool list. The runtime hot-loads at startup (no hot-reload yet — restart to pick up changes).
+Drop a new `.md` file in `workflows/` with frontmatter listing triggers, an allowed tool list, and optionally Agent SDK Skills:
+
+```yaml
+---
+triggers:
+  - some.event.type
+tools:
+  - send_reply
+  - create_issue
+skills:
+  - writing-github-issues
+---
+```
+
+The runtime loads workflows at startup (no hot-reload — restart to pick up changes).
+
+## Adding an Agent SDK Skill
+
+Create `.claude/skills/<skill-name>/SKILL.md` with frontmatter:
+
+```yaml
+---
+name: <skill-name>
+description: <when the model should load this skill>
+---
+
+# Skill body
+```
+
+The description is the prompt the model uses to decide whether to read the full file. Make it specific about *when* to invoke. Then reference the skill from a workflow's `skills:` list.
 
 ## Design notes
 
-See the conversation that produced this scaffold for the reasoning. Key points:
-
+- **Workflows are not Agent SDK Skills.** Workflows are event-routed system prompts loaded eagerly by the runtime. Skills are model-loaded knowledge modules that activate based on the description matching the task. The runtime uses both: workflow as system prompt, Skills as on-demand context.
 - **One owner per piece of state.** `tool-correlation` is the only thing that opens `correlation.db`; `tool-scheduler` owns `scheduler.db`. The scheduler is in-process inside the runtime via `createSdkMcpServer` because the engine and the runtime need to share the same SQLite handle without cross-process coordination.
 - **Sessions are first-class.** Each agent run gets a session ID from the Agent SDK. When the agent calls `wait_for_event`, the runtime records that session ID on the pending wait. On resume, `query()` is called with `resume: sessionId` so the agent picks up its prior turns (issue creation, link, first reply) as actual conversation history — not a synthetic `resume_context` prose summary. The `resume_context` is still passed as a user message for the agent to read; the session is the durable memory.
-- **Idempotency lives in the skill.** The skill prose tells the agent to call `was_replied`/`mark_replied` on resume paths. The engine doesn't enforce this — if you don't trust the agent to be disciplined, move the check into the `send_reply` tool itself.
-- **Allowed-tools translation.** Skills list short tool names (`send_reply`); the runtime expands them to MCP-prefixed names (`mcp__gmail__send_reply`) via a hard-coded server→tools map in `mcp-clients.ts`. If you add a tool, update that map.
+- **Idempotency lives in the workflow.** The workflow prose tells the agent to call `was_replied`/`mark_replied` on resume paths. The engine doesn't enforce this — if you don't trust the agent to be disciplined, move the check into the `send_reply` tool itself.
+- **Allowed-tools translation.** Workflows list short tool names (`send_reply`); the runtime expands them to MCP-prefixed names (`mcp__gmail__send_reply`) via a hard-coded server→tools map in `mcp-clients.ts`. If you add a tool, update that map.

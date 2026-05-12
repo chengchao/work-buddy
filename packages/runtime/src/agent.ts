@@ -2,20 +2,20 @@ import { query } from "@anthropic-ai/claude-agent-sdk";
 import * as scheduler from "tool-scheduler";
 import { buildMcpServers, expandAllowedTools } from "./mcp-clients.ts";
 import { runContext } from "./run-context.ts";
-import type { Skill } from "./skill-loader.ts";
+import type { Workflow } from "./workflow-loader.ts";
 
 const MODEL = "claude-opus-4-7";
 
 const log = (msg: string) => process.stdout.write(`[agent] ${msg}\n`);
 
 export type RunRequest = {
-  skill: Skill;
+  workflow: Workflow;
   userPrompt: string;
   resumeSessionId?: string;
 };
 
-export async function runSkill(req: RunRequest): Promise<string | null> {
-  const allowedTools = expandAllowedTools(req.skill.tools);
+export async function runWorkflow(req: RunRequest): Promise<string | null> {
+  const allowedTools = expandAllowedTools(req.workflow.tools);
   const startedAt = Date.now();
   const store = { sessionId: req.resumeSessionId ?? null };
 
@@ -24,13 +24,17 @@ export async function runSkill(req: RunRequest): Promise<string | null> {
       prompt: req.userPrompt,
       options: {
         model: MODEL,
-        systemPrompt: req.skill.body,
+        systemPrompt: req.workflow.body,
         mcpServers: buildMcpServers(),
         allowedTools,
+        // Agent SDK Skills that this workflow declares. The model loads each
+        // skill's full SKILL.md on demand when its description matches the task.
+        skills: req.workflow.skills.length > 0 ? req.workflow.skills : undefined,
         permissionMode: "bypassPermissions",
-        // We provide a custom system prompt; we don't want filesystem-resolved
-        // user/project/local Claude Code settings bleeding in.
-        settingSources: [],
+        // We need "project" so the Agent SDK picks up Skills from .claude/skills/.
+        // No .claude/settings.json or .claude/agents/ exist in this repo, so
+        // "project" effectively only contributes Skills here.
+        settingSources: req.workflow.skills.length > 0 ? ["project"] : [],
         resume: req.resumeSessionId,
       },
     });
@@ -45,9 +49,8 @@ export async function runSkill(req: RunRequest): Promise<string | null> {
             store.sessionId = msg.session_id;
             log(
               `session ${msg.session_id.slice(0, 8)}… ` +
-                `tools=${msg.tools.length} mcp=${msg.mcp_servers
-                  .map((s) => `${s.name}:${s.status}`)
-                  .join(",")}`,
+                `tools=${msg.tools.length} skills=${msg.skills?.length ?? 0} ` +
+                `mcp=${msg.mcp_servers.map((s) => `${s.name}:${s.status}`).join(",")}`,
             );
           }
           break;
@@ -65,11 +68,11 @@ export async function runSkill(req: RunRequest): Promise<string | null> {
         case "result":
           if (msg.subtype === "success") {
             log(
-              `skill '${req.skill.name}' done ` +
+              `workflow '${req.workflow.name}' done ` +
                 `(${msg.num_turns} turns, $${msg.total_cost_usd.toFixed(4)})`,
             );
           } else {
-            log(`skill '${req.skill.name}' ended: ${msg.subtype}`);
+            log(`workflow '${req.workflow.name}' ended: ${msg.subtype}`);
           }
           break;
       }

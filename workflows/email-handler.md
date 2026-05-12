@@ -13,6 +13,8 @@ tools:
   - was_replied
   - mark_replied
   - wait_for_event
+skills:
+  - writing-github-issues
 ---
 
 # Email handler
@@ -33,7 +35,7 @@ Classify the email into one of:
 
 The user is reporting that something is broken or wrong.
 
-1. Call `create_issue` with the email subject and body, targeting `${GITHUB_REPO}` (use `owner/repo` from the environment context — for the scaffold, use `example/repo`).
+1. Call `create_issue` with the email subject and body, targeting `${GITHUB_REPO}` (use `owner/repo` from the environment context — for the scaffold, use `example/repo`). The `writing-github-issues` skill applies here — load it for title and body conventions.
 2. Call `link` to record the mapping from the new issue URL to the email thread:
    - `source: "gmail"`
    - `source_ref: <gmail thread id>`
@@ -43,7 +45,7 @@ The user is reporting that something is broken or wrong.
    - `event_type: "github.issue.closed"`
    - `filter: { issueUrl: <the created issue URL> }`
    - `timeout_seconds: 2592000` (30 days)
-   - `resume_skill: "email-handler"`
+   - `resume_workflow: "email-handler"`
    - `resume_context: "Filed issue <URL> from gmail thread <id> for <email>. When it closes, reply to that thread confirming resolution."`
 5. End your turn.
 

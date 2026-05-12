@@ -2,14 +2,18 @@
 
 ## Project Structure & Module Organization
 
-This is a pnpm TypeScript monorepo for a skill-based agent runtime. Source code lives under
+This is a pnpm TypeScript monorepo for an event-routed agent runtime. Source code lives under
 `packages/`, with one package per runtime or MCP tool:
 
-- `packages/runtime/` contains the HTTP server, event dispatch, skill loading, and Agent SDK glue.
+- `packages/runtime/` contains the HTTP server, event dispatch, workflow loading, and Agent SDK glue.
 - `packages/contracts/` defines shared Zod event schemas.
 - `packages/tool-gmail/`, `packages/tool-github/`, `packages/tool-correlation/`, and
   `packages/tool-scheduler/` contain MCP tool implementations.
-- `skills/*.md` contains workflow definitions with frontmatter triggers and allowed tools.
+- `workflows/*.md` contains workflow definitions with frontmatter triggers, allowed tools, and
+  optional Agent SDK Skill references.
+- `.claude/skills/<name>/SKILL.md` contains Agent SDK Skills — reusable, model-loaded domain
+  knowledge referenced from workflow `skills:` lists. Skills are distinct from workflows: workflows
+  are eagerly loaded as the system prompt, Skills are loaded on demand by the model.
 - `data/` is for local SQLite state and is excluded from formatting and versioned source.
 
 ## Build, Test, and Development Commands
@@ -61,7 +65,11 @@ linked issues when relevant, and screenshots or logs for observable workflow cha
 
 Do not bypass package ownership of state: `tool-correlation` owns `correlation.db`, and
 `tool-scheduler` owns `scheduler.db`. When adding MCP tools, update the tool package, the
-`SERVER_TOOLS` map in `packages/runtime/src/mcp-clients.ts`, and the relevant skill frontmatter.
+`SERVER_TOOLS` map in `packages/runtime/src/mcp-clients.ts`, and the relevant workflow frontmatter.
+
+The word "skill" alone is ambiguous in this repo. Workflows (`workflows/*.md`) are event-routed
+system prompts. Agent SDK Skills (`.claude/skills/<name>/SKILL.md`) are reusable knowledge modules
+loaded on demand by the model. Always say which one you mean.
 
 ## LLM Coding Guidelines
 

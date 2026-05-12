@@ -9,7 +9,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..", "..", "..");
 
 // Which short tool names each MCP server provides. This is the source of
-// truth for `allowedTools` translation from skill frontmatter.
+// truth for `allowedTools` translation from workflow frontmatter.
 export const SERVER_TOOLS: Record<string, string[]> = {
   gmail: ["get_thread", "send_reply"],
   github: ["create_issue", "comment_on_issue", "get_issue"],
@@ -61,19 +61,17 @@ export function buildMcpServers(): Record<string, McpServerConfig> {
             .record(z.unknown())
             .describe("Exact-match filter over event.data. e.g. { issueUrl: 'https://...' }"),
           timeout_seconds: z.number().int().min(60),
-          resume_skill: z.string().describe("Which skill to re-invoke when this wait fires."),
+          resume_workflow: z.string().describe("Which workflow to re-invoke when this wait fires."),
           resume_context: z
             .string()
             .describe("Note to your future self explaining what to do on resume."),
         },
         async (args) => {
-          // Session ID is bound by the runtime after the query finishes
-          // (see bindSessionToWaitsIn in dispatch.ts). We pass null here.
           const result = scheduler.waitForEvent({
             eventType: args.event_type,
             filter: args.filter as Record<string, unknown>,
             timeoutSeconds: args.timeout_seconds,
-            resumeSkill: args.resume_skill,
+            resumeWorkflow: args.resume_workflow,
             resumeContext: args.resume_context,
             sessionId: runContext.getStore()?.sessionId ?? null,
           });
@@ -89,7 +87,7 @@ export function buildMcpServers(): Record<string, McpServerConfig> {
   return config;
 }
 
-// Translate skill's short tool names (e.g. "send_reply") into the full
+// Translate the workflow's short tool names (e.g. "send_reply") into the full
 // MCP-prefixed names the Agent SDK uses for allowedTools (e.g.
 // "mcp__gmail__send_reply").
 export function expandAllowedTools(shortNames: string[]): string[] {

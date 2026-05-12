@@ -3,7 +3,7 @@ import { AnyEvent } from "@wb/contracts";
 import { Hono } from "hono";
 import { dispatchEvent, startWaker } from "./dispatch.ts";
 import { buildMcpServers, SERVER_TOOLS } from "./mcp-clients.ts";
-import { loadSkills } from "./skill-loader.ts";
+import { loadWorkflows } from "./workflow-loader.ts";
 
 const log = (msg: string) => process.stdout.write(`[runtime] ${msg}\n`);
 
@@ -12,8 +12,8 @@ async function main() {
     log("ANTHROPIC_API_KEY not set — agent calls will fail");
   }
 
-  const skills = await loadSkills();
-  log(`loaded ${skills.size} skill(s): ${[...skills.keys()].join(", ") || "(none)"}`);
+  const workflows = await loadWorkflows();
+  log(`loaded ${workflows.size} workflow(s): ${[...workflows.keys()].join(", ") || "(none)"}`);
 
   // Eagerly construct the cached mcpServers config so the in-process scheduler
   // tool is wired up before any event arrives.
@@ -24,14 +24,14 @@ async function main() {
       .join(" ")}`,
   );
 
-  const stopWaker = startWaker(skills);
+  const stopWaker = startWaker(workflows);
 
   const app = new Hono();
 
   app.get("/", (c) =>
     c.json({
       ok: true,
-      skills: [...skills.keys()],
+      workflows: [...workflows.keys()],
       servers: Object.keys(SERVER_TOOLS),
       tools: Object.values(SERVER_TOOLS).flat(),
     }),
@@ -43,7 +43,7 @@ async function main() {
     if (!parsed.success) {
       return c.json({ ok: false, error: parsed.error.flatten() }, 400);
     }
-    dispatchEvent(skills, parsed.data).catch((e) => log(`dispatch error: ${e.message}`));
+    dispatchEvent(workflows, parsed.data).catch((e) => log(`dispatch error: ${e.message}`));
     return c.json({ ok: true, accepted: parsed.data.type });
   });
 
@@ -52,7 +52,7 @@ async function main() {
     const ghEvent = c.req.header("X-GitHub-Event");
     const body = await c.req.json();
     if (ghEvent === "issues" && body.action === "closed") {
-      dispatchEvent(skills, {
+      dispatchEvent(workflows, {
         type: "github.issue.closed",
         data: {
           issueUrl: body.issue.html_url,
