@@ -6,7 +6,7 @@ import { z } from "zod";
 import { runContext } from "./run-context.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..", "..", "..");
+export const ROOT = resolve(__dirname, "..", "..", "..");
 
 // Which short tool names each MCP server provides. This is the source of
 // truth for `allowedTools` translation from workflow frontmatter.

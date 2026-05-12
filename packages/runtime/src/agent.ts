@@ -1,6 +1,6 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import * as scheduler from "tool-scheduler";
-import { buildMcpServers, expandAllowedTools } from "./mcp-clients.ts";
+import { buildMcpServers, expandAllowedTools, ROOT } from "./mcp-clients.ts";
 import { runContext } from "./run-context.ts";
 import type { Workflow } from "./workflow-loader.ts";
 
@@ -24,6 +24,10 @@ export async function runWorkflow(req: RunRequest): Promise<string | null> {
       prompt: req.userPrompt,
       options: {
         model: MODEL,
+        // Without cwd, the SDK uses process.cwd() — which is packages/runtime/
+        // under `pnpm dev`, so it would fail to find `.claude/skills/` at the
+        // repo root. Pin it to the repo root explicitly.
+        cwd: ROOT,
         systemPrompt: req.workflow.body,
         mcpServers: buildMcpServers(),
         allowedTools,

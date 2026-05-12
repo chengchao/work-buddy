@@ -47,7 +47,16 @@ export async function dispatchEvent(
     }).catch((e) => log(`resume failed for wait ${wait.id}: ${e.message}`));
   }
 
-  // Fresh trigger-matched runs.
+  // Fresh trigger-matched runs are suppressed when a wait already handled
+  // this event. A wait IS the response — firing both causes duplicate work
+  // and races on was_replied/mark_replied.
+  if (matchingWaits.length > 0) {
+    if (triggered.length > 0) {
+      log(`suppressing ${triggered.length} fresh trigger(s) — wait already handled this event`);
+    }
+    return;
+  }
+
   for (const workflow of triggered) {
     const prompt = [
       `An event of type '${event.type}' just arrived. Handle it per your instructions.`,
