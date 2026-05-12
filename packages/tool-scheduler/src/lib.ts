@@ -24,17 +24,6 @@ db.exec(`
     ON pending_waits(event_type);
 `);
 
-// Idempotent migrations for DBs created by earlier scaffold versions.
-try {
-  db.exec(`ALTER TABLE pending_waits ADD COLUMN session_id TEXT`);
-} catch {
-  // column already exists
-}
-const cols = db.prepare(`PRAGMA table_info(pending_waits)`).all() as Array<{ name: string }>;
-if (cols.some((c) => c.name === "resume_skill")) {
-  db.exec(`ALTER TABLE pending_waits RENAME COLUMN resume_skill TO resume_workflow`);
-}
-
 export type PendingWait = {
   id: string;
   event_type: string;

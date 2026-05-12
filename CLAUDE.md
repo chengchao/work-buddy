@@ -139,8 +139,6 @@ The session ID is captured two ways for robustness:
 
 One owner per SQLite file. `tool-correlation/src/lib.ts` is the only thing that opens `correlation.db`. `tool-scheduler/src/lib.ts` is the only thing that opens `scheduler.db` — but it runs in the runtime process (because of the asymmetry above), so the runtime can `import * as scheduler from "tool-scheduler"` and call it directly. Do not bypass these libraries to read from the DBs elsewhere.
 
-The scheduler lib runs an idempotent migration on boot: `ALTER TABLE pending_waits RENAME COLUMN resume_skill TO resume_workflow` if the old column is present. Pre-existing DB files keep working.
-
 ### Triggers
 
 There is no separate `trigger-*` package in the scaffold. Triggers are HTTP routes on the runtime (`/events`, `/webhooks/github`) that normalize provider-specific payloads into `AnyEvent`. Real Gmail watch / Discord gateway would be standalone processes POSTing to `/events`.
