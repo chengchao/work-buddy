@@ -1,14 +1,14 @@
+import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import Database from "better-sqlite3";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DB_PATH =
   process.env.WB_SCHEDULER_DB ?? resolve(__dirname, "..", "..", "..", "data", "scheduler.db");
 
 const db = new Database(DB_PATH);
-db.pragma("journal_mode = WAL");
+db.exec("PRAGMA journal_mode = WAL");
 db.exec(`
   CREATE TABLE IF NOT EXISTS pending_waits (
     id              TEXT PRIMARY KEY,

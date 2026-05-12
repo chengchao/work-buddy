@@ -1,13 +1,13 @@
+import { Database } from "bun:sqlite";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import Database from "better-sqlite3";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DB_PATH =
   process.env.WB_CORRELATION_DB ?? resolve(__dirname, "..", "..", "..", "data", "correlation.db");
 
 const db = new Database(DB_PATH);
-db.pragma("journal_mode = WAL");
+db.exec("PRAGMA journal_mode = WAL");
 db.exec(`
   CREATE TABLE IF NOT EXISTS correlations (
     issue_url   TEXT PRIMARY KEY,
@@ -64,7 +64,7 @@ export function findBySource(source: string, sourceRef: string): Correlation | n
 }
 
 export function wasReplied(eventKey: string): boolean {
-  return db.prepare(`SELECT 1 FROM reply_receipts WHERE event_key = ?`).get(eventKey) !== undefined;
+  return db.prepare(`SELECT 1 FROM reply_receipts WHERE event_key = ?`).get(eventKey) != null;
 }
 
 export function markReplied(eventKey: string) {

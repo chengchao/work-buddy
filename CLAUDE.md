@@ -68,24 +68,24 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ## Commands
 
 ```sh
-pnpm install          # bootstrap all workspace packages
-pnpm dev              # start the runtime (HTTP server on PORT, default 3000)
-pnpm typecheck        # tsc --noEmit across every package
-pnpm check            # biome check (lint + format dry-run)
-pnpm check:fix        # biome check --write (apply fixes)
-pnpm format           # biome format --write
-pnpm lint             # biome lint only
+bun install          # bootstrap all workspace packages
+bun dev              # start the runtime (HTTP server on PORT, default 3000)
+bun typecheck        # tsc --noEmit across every package
+bun check            # biome check (lint + format dry-run)
+bun check:fix        # biome check --write (apply fixes)
+bun format           # biome format --write
+bun lint             # biome lint only
 
 # Run any tool's MCP server standalone (for mcp-inspector or Claude Desktop):
-pnpm mcp:gmail
-pnpm mcp:github
-pnpm mcp:correlation
-pnpm mcp:scheduler
+bun mcp:gmail
+bun mcp:github
+bun mcp:correlation
+bun mcp:scheduler
 ```
 
-There is no test suite yet. Pre-commit baseline: `pnpm check:fix && pnpm typecheck`.
+There is no test suite yet. Pre-commit baseline: `bun check:fix && bun typecheck`.
 
-Requires Node 22+ (uses `node:` builtins and modern ESM). `ANTHROPIC_API_KEY` must be set for agent calls — the runtime boots without it but the agent path 401s.
+Requires Bun 1.3+ (the runtime runs `.ts` directly via Bun and uses `bun:sqlite`). `ANTHROPIC_API_KEY` must be set for agent calls — the runtime boots without it but the agent path 401s.
 
 ## Architecture
 
@@ -105,7 +105,7 @@ These are different abstractions despite both using markdown + frontmatter. Don'
 
 When a workflow declares `skills: [foo, bar]`, the runtime sets `settingSources: ["project"]` so the Agent SDK picks them up from `.claude/skills/`. If a workflow declares no skills, `settingSources: []` is used (no filesystem-resolved Claude Code settings bleed in).
 
-### Package layout (pnpm monorepo)
+### Package layout (Bun workspaces)
 
 - `packages/contracts/` — zod schemas for normalized events (`gmail.received`, `github.issue.closed`, …). The discriminated union `AnyEvent` is the wire contract triggers POST to `/events`.
 - `packages/tool-{gmail,github}/` — stub MCP servers (lib.ts returns fake data, logs to stderr). Replace `lib.ts` with real API clients when wiring real integrations; `mcp.ts` doesn't need to change.

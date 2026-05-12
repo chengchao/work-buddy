@@ -36,7 +36,7 @@ export function buildMcpServers(): Record<string, McpServerConfig> {
   for (const { id, path } of STDIO_SUBPROCESSES) {
     config[id] = {
       type: "stdio",
-      command: "tsx",
+      command: "bun",
       args: [resolve(ROOT, path)],
     };
   }

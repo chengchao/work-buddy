@@ -10,7 +10,8 @@
     "wb-github-mcp": "./src/mcp.ts"
   },
   "scripts": {
-    "mcp": "tsx src/mcp.ts"
+    "mcp": "bun src/mcp.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
