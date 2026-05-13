@@ -4,6 +4,11 @@ import type { Workflow } from "./workflow-loader.ts";
 
 const log = (msg: string) => process.stdout.write(`[dispatch] ${msg}\n`);
 
+// Skill descriptions in .claude/skills/handle-*/SKILL.md match these prefixes
+// literally — that's how the agent picks the right skill on resume. Keep in sync.
+const RESUMING_WAIT_PREFIX = "[RESUMING WAIT]";
+const WAIT_TIMED_OUT_PREFIX = "[WAIT TIMED OUT]";
+
 export type IncomingEvent = {
   type: string;
   data: Record<string, unknown>;
@@ -31,7 +36,7 @@ export async function dispatchEvent(
       continue;
     }
     const prompt = [
-      `[RESUMING WAIT]`,
+      RESUMING_WAIT_PREFIX,
       `You previously scheduled a wait with this context:`,
       wait.resume_context,
       ``,
@@ -79,7 +84,7 @@ export function startWaker(workflows: Map<string, Workflow>, intervalMs = 30_000
       const workflow = workflows.get(wait.resume_workflow);
       if (!workflow) continue;
       const prompt = [
-        `[WAIT TIMED OUT]`,
+        WAIT_TIMED_OUT_PREFIX,
         `You previously scheduled a wait with this context:`,
         wait.resume_context,
         ``,
