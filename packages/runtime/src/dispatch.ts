@@ -4,6 +4,11 @@ import type { Workflow } from "./workflow-loader.ts";
 
 const log = (msg: string) => process.stdout.write(`[dispatch] ${msg}\n`);
 
+// Skill descriptions in .claude/skills/handle-*/SKILL.md match these prefixes
+// literally — that's how the agent picks the right skill on resume. Keep in sync.
+const RESUMING_WAIT_PREFIX = "[RESUMING WAIT]";
+const WAIT_TIMED_OUT_PREFIX = "[WAIT TIMED OUT]";
+
 export type IncomingEvent = {
   type: string;
   data: Record<string, unknown>;
@@ -31,7 +36,7 @@ export async function dispatchEvent(
       continue;
     }
     const prompt = [
-      `[RESUMING WAIT]`,
+      RESUMING_WAIT_PREFIX,
       `You previously scheduled a wait with this context:`,
       wait.resume_context,
       ``,
@@ -47,7 +52,16 @@ export async function dispatchEvent(
     }).catch((e) => log(`resume failed for wait ${wait.id}: ${e.message}`));
   }
 
-  // Fresh trigger-matched runs.
+  // Fresh trigger-matched runs are suppressed when a wait already handled
+  // this event. A wait IS the response — firing both causes duplicate work
+  // and races on was_replied/mark_replied.
+  if (matchingWaits.length > 0) {
+    if (triggered.length > 0) {
+      log(`suppressing ${triggered.length} fresh trigger(s) — wait already handled this event`);
+    }
+    return;
+  }
+
   for (const workflow of triggered) {
     const prompt = [
       `An event of type '${event.type}' just arrived. Handle it per your instructions.`,
@@ -70,7 +84,7 @@ export function startWaker(workflows: Map<string, Workflow>, intervalMs = 30_000
       const workflow = workflows.get(wait.resume_workflow);
       if (!workflow) continue;
       const prompt = [
-        `[WAIT TIMED OUT]`,
+        WAIT_TIMED_OUT_PREFIX,
         `You previously scheduled a wait with this context:`,
         wait.resume_context,
         ``,

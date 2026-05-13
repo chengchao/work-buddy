@@ -1,6 +1,7 @@
 import { query } from "@anthropic-ai/claude-agent-sdk";
 import * as scheduler from "tool-scheduler";
 import { buildMcpServers, expandAllowedTools } from "./mcp-clients.ts";
+import { ROOT } from "./paths.ts";
 import { runContext } from "./run-context.ts";
 import type { Workflow } from "./workflow-loader.ts";
 
@@ -24,6 +25,8 @@ export async function runWorkflow(req: RunRequest): Promise<string | null> {
       prompt: req.userPrompt,
       options: {
         model: MODEL,
+        // Pin cwd so the SDK finds .claude/skills/ at the repo root.
+        cwd: ROOT,
         systemPrompt: req.workflow.body,
         mcpServers: buildMcpServers(),
         allowedTools,

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a pnpm TypeScript monorepo for an event-routed agent runtime. Source code lives under
+This is a Bun TypeScript monorepo for an event-routed agent runtime. Source code lives under
 `packages/`, with one package per runtime or MCP tool:
 
 - `packages/runtime/` contains the HTTP server, event dispatch, workflow loading, and Agent SDK glue.
@@ -18,20 +18,20 @@ This is a pnpm TypeScript monorepo for an event-routed agent runtime. Source cod
 
 ## Build, Test, and Development Commands
 
-Use Node 22+ and pnpm 9.
+Use Bun 1.3+. The runtime executes TypeScript directly via Bun (no `tsx`/compile step); SQLite goes through `bun:sqlite`, not `better-sqlite3`. The monorepo uses Bun workspaces (no pnpm).
 
 ```sh
-pnpm install          # install workspace dependencies
-pnpm dev              # start the runtime on PORT, default 3000
-pnpm typecheck        # run tsc --noEmit across all packages
-pnpm check            # run Biome lint + format checks
-pnpm check:fix        # apply Biome fixes
-pnpm format           # format files with Biome
-pnpm lint             # run Biome lint only
-pnpm mcp:gmail        # run a tool MCP server standalone
-pnpm mcp:github
-pnpm mcp:correlation
-pnpm mcp:scheduler
+bun install          # install workspace dependencies
+bun dev              # start the runtime on PORT, default 3000
+bun typecheck        # run tsc --noEmit across all packages
+bun check            # run Biome lint + format checks
+bun check:fix        # apply Biome fixes
+bun format           # format files with Biome
+bun lint             # run Biome lint only
+bun mcp:gmail        # run a tool MCP server standalone
+bun mcp:github
+bun mcp:correlation
+bun mcp:scheduler
 ```
 
 ## Coding Style & Naming Conventions
@@ -47,10 +47,10 @@ and `src/mcp.ts` for MCP wiring.
 There is no automated test suite yet. Before submitting changes, run:
 
 ```sh
-pnpm check:fix && pnpm typecheck
+bun check:fix && bun typecheck
 ```
 
-For runtime behavior, start `pnpm dev` and exercise `/events` with the sample curl payloads in
+For runtime behavior, start `bun dev` and exercise `/events` with the sample curl payloads in
 `README.md`. If adding tests, place them near the package they validate and use clear names such
 as `dispatch.test.ts` or `scheduler.test.ts`.
 

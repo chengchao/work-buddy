@@ -1,12 +1,9 @@
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import { createSdkMcpServer, type McpServerConfig, tool } from "@anthropic-ai/claude-agent-sdk";
 import * as scheduler from "tool-scheduler";
 import { z } from "zod";
+import { ROOT } from "./paths.ts";
 import { runContext } from "./run-context.ts";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, "..", "..", "..");
 
 // Which short tool names each MCP server provides. This is the source of
 // truth for `allowedTools` translation from workflow frontmatter.
@@ -36,7 +33,7 @@ export function buildMcpServers(): Record<string, McpServerConfig> {
   for (const { id, path } of STDIO_SUBPROCESSES) {
     config[id] = {
       type: "stdio",
-      command: "tsx",
+      command: "bun",
       args: [resolve(ROOT, path)],
     };
   }

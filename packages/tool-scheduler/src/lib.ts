@@ -1,14 +1,14 @@
+import { Database } from "bun:sqlite";
 import { randomUUID } from "node:crypto";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import Database from "better-sqlite3";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DB_PATH =
   process.env.WB_SCHEDULER_DB ?? resolve(__dirname, "..", "..", "..", "data", "scheduler.db");
 
 const db = new Database(DB_PATH);
-db.pragma("journal_mode = WAL");
+db.exec("PRAGMA journal_mode = WAL");
 db.exec(`
   CREATE TABLE IF NOT EXISTS pending_waits (
     id              TEXT PRIMARY KEY,
@@ -23,17 +23,6 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_pending_waits_event_type
     ON pending_waits(event_type);
 `);
-
-// Idempotent migrations for DBs created by earlier scaffold versions.
-try {
-  db.exec(`ALTER TABLE pending_waits ADD COLUMN session_id TEXT`);
-} catch {
-  // column already exists
-}
-const cols = db.prepare(`PRAGMA table_info(pending_waits)`).all() as Array<{ name: string }>;
-if (cols.some((c) => c.name === "resume_skill")) {
-  db.exec(`ALTER TABLE pending_waits RENAME COLUMN resume_skill TO resume_workflow`);
-}
 
 export type PendingWait = {
   id: string;

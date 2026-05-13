@@ -28,12 +28,12 @@ The agent loop is owned by `@anthropic-ai/claude-agent-sdk` (`query()`). The run
 
 ## Setup
 
-Requires Node 22+ and pnpm.
+Requires Bun 1.3+. The runtime executes TypeScript directly via Bun (no `tsx` / no compile step), uses `bun:sqlite` for the scheduler and correlation stores, and uses Bun workspaces for the monorepo.
 
 ```sh
-pnpm install
+bun install
 cp .env.example .env   # then add ANTHROPIC_API_KEY
-pnpm dev
+bun dev
 ```
 
 You should see `[runtime] listening on http://localhost:3000`.
@@ -41,11 +41,11 @@ You should see `[runtime] listening on http://localhost:3000`.
 ## Lint, format, typecheck
 
 ```sh
-pnpm check          # biome check (lint + format dry-run)
-pnpm check:fix      # biome check --write (apply fixes)
-pnpm format         # biome format --write
-pnpm lint           # biome lint
-pnpm typecheck      # tsc --noEmit across all packages
+bun check          # biome check (lint + format dry-run)
+bun check:fix      # biome check --write (apply fixes)
+bun format         # biome format --write
+bun lint           # biome lint
+bun typecheck      # tsc --noEmit across all packages
 ```
 
 Biome config is in `biome.json` (2-space indent, double quotes, 100-char line width). It respects `.gitignore`, so `data/`, `node_modules/`, and `*.db` are excluded automatically.
@@ -123,13 +123,13 @@ work-buddy/
 Each tool is a working MCP server you can connect to from Claude Desktop or `mcp-inspector`:
 
 ```sh
-pnpm mcp:gmail        # tsx packages/tool-gmail/src/mcp.ts
-pnpm mcp:github
-pnpm mcp:correlation
-pnpm mcp:scheduler
+bun mcp:gmail        # bun packages/tool-gmail/src/mcp.ts
+bun mcp:github
+bun mcp:correlation
+bun mcp:scheduler
 ```
 
-To wire one into Claude Desktop, point its MCP config at the absolute path of any `tool-*/src/mcp.ts` (or `wb-*-mcp` bin after `pnpm install`).
+To wire one into Claude Desktop, point its MCP config at the absolute path of any `tool-*/src/mcp.ts` (or `wb-*-mcp` bin after `bun install`).
 
 ## Wiring real APIs
 

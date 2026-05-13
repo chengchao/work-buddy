@@ -10,14 +10,11 @@
     "wb-scheduler-mcp": "./src/mcp.ts"
   },
   "scripts": {
-    "mcp": "tsx src/mcp.ts"
+    "mcp": "bun src/mcp.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
-    "better-sqlite3": "^11.3.0",
     "zod": "^3.23.0"
-  },
-  "devDependencies": {
-    "@types/better-sqlite3": "^7.6.0"
   }
 }
