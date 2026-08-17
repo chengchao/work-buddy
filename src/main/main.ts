@@ -22,10 +22,7 @@ const createWindow = () => {
   }
 
   void mainWindow.loadFile(
-    path.join(
-      __dirname,
-      `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`,
-    ),
+    path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
   );
 };
 

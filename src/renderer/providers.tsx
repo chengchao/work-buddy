@@ -8,4 +8,3 @@ export function AppProviders({ children }: PropsWithChildren) {
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
 }
-

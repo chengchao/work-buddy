@@ -1,0 +1,35 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "oxc", "react"],
+  "ignorePatterns": [".vite/**", "out/**"],
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "react/react-compiler": "error",
+    "react/only-export-components": [
+      "error",
+      {
+        "allowConstantExport": true
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "forge.config.ts",
+        "vite.*.config.mts",
+        "src/main/**/*.ts",
+        "src/preload/**/*.ts"
+      ],
+      "env": {
+        "node": true
+      }
+    },
+    {
+      "files": ["src/renderer/**/*.{ts,tsx}"],
+      "env": {
+        "browser": true
+      }
+    }
+  ]
+}

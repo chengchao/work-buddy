@@ -7,4 +7,3 @@ export function followSystemTheme() {
   applyColorScheme();
   colorScheme.addEventListener('change', applyColorScheme);
 }
-

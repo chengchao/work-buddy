@@ -27,4 +27,3 @@ export function App() {
     </main>
   );
 }
-

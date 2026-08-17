@@ -5,7 +5,7 @@ TypeScript, Tailwind CSS, and shadcn/ui.
 
 ## Requirements
 
-- Node.js 22.12 or newer
+- Node.js 24 or newer
 - Corepack enabled so the project uses its pinned pnpm version
 
 ```sh
@@ -23,6 +23,7 @@ pnpm start
 
 ```sh
 pnpm lint
+pnpm format:check
 pnpm typecheck
 pnpm package
 pnpm make
