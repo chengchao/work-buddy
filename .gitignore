@@ -1,7 +1,9 @@
 .DS_Store
 .vite/
+.pnpm-store/
 node_modules/
 out/
+playwright-report/
+test-results/
 *.log
 *.tsbuildinfo
-
