@@ -46,12 +46,14 @@ export function ConversationSurface({
           </h2>
           <p className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-sky-700">
             <ShieldCheck className="size-3.5" />
-            Permanent · Built in
+            {chiefOfStaff.permanent && 'Permanent'}
+            {chiefOfStaff.permanent && chiefOfStaff.builtIn && ' · '}
+            {chiefOfStaff.builtIn && 'Built in'}
           </p>
         </div>
         <div className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[10px] font-semibold text-emerald-800 sm:flex">
           <span className="size-1.5 rounded-full bg-emerald-500" />
-          Supervising every work stream
+          {briefing.supervisionSummary}
         </div>
       </header>
 
@@ -70,7 +72,7 @@ export function ConversationSurface({
             Workspace overview
           </h3>
           <p className="mt-0.5 truncate text-[11px] text-slate-600">
-            Chief of Staff · Monitoring all active Routed Requests
+            {chiefOfStaff.title} · {briefing.contextSummary}
           </p>
         </div>
         <p className="hidden items-center gap-1.5 text-[10px] font-medium text-slate-500 lg:flex">
@@ -82,7 +84,7 @@ export function ConversationSurface({
       <div className="min-h-0 flex-1 overflow-y-auto px-5 py-6 lg:px-8">
         <div className="mx-auto flex min-h-full max-w-3xl flex-col justify-end">
           <time className="mb-5 self-center rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 text-[9px] font-semibold tracking-[0.08em] text-slate-500 uppercase shadow-sm">
-            Today
+            {briefing.dateLabel}
           </time>
 
           <article className="max-w-[660px] self-start rounded-3xl rounded-tl-lg border border-slate-200/80 bg-white p-5 shadow-[0_16px_40px_rgba(15,23,42,0.08)]">
@@ -94,9 +96,11 @@ export function ConversationSurface({
               />
               <div>
                 <h3 className="text-xs font-semibold text-slate-950">
-                  Chief of Staff
+                  {chiefOfStaff.title}
                 </h3>
-                <time className="text-[10px] text-slate-400">9:08 AM</time>
+                <time className="text-[10px] text-slate-400">
+                  {briefing.messageTimestamp}
+                </time>
               </div>
             </header>
 
@@ -168,8 +172,7 @@ export function ConversationSurface({
             </section>
 
             <p className="mt-4 text-[10px] leading-4 text-slate-500">
-              I’m supervising routine Follow-through and will bring back only
-              matters that need your Approval or judgment.
+              {briefing.closingNote}
             </p>
           </article>
         </div>

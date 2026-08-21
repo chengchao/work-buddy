@@ -8,34 +8,29 @@ test('Executive opens to the permanent Chief of Staff workspace', async () => {
 
   try {
     const window = await electronApp.firstWindow();
+    const navigation = window.getByRole('navigation', {
+      name: 'Workspace views',
+    });
+    const workStreams = window.getByRole('region', { name: 'Work streams' });
+    const conversation = window.getByRole('main', {
+      name: 'Chief of Staff conversation',
+    });
 
-    await expect(
-      window.getByRole('navigation', { name: 'Workspace views' }),
-    ).toContainText('All chats');
-    await expect(
-      window.getByRole('navigation', { name: 'Workspace views' }),
-    ).toContainText('Needs you');
-    await expect(
-      window.getByRole('navigation', { name: 'Workspace views' }),
-    ).toContainText('Working');
-    await expect(
-      window.getByRole('navigation', { name: 'Workspace views' }),
-    ).toContainText('Finance');
-    await expect(
-      window.getByRole('navigation', { name: 'Workspace views' }),
-    ).toContainText('Customers');
-    await expect(
-      window.getByRole('region', { name: 'Work streams' }),
-    ).toContainText('Chief of Staff');
-    await expect(
-      window.getByRole('region', { name: 'Work streams' }),
-    ).toContainText('Invoice reconciliation');
-    await expect(
-      window.getByRole('main', { name: 'Chief of Staff conversation' }),
-    ).toContainText('Permanent · Built in');
-    await expect(
-      window.getByRole('main', { name: 'Chief of Staff conversation' }),
-    ).toContainText('Three work streams are active. One needs your attention.');
+    for (const view of [
+      'All chats',
+      'Needs you',
+      'Working',
+      'Finance',
+      'Customers',
+    ]) {
+      await expect(navigation).toContainText(view);
+    }
+    await expect(workStreams).toContainText('Chief of Staff');
+    await expect(workStreams).toContainText('Invoice reconciliation');
+    await expect(conversation).toContainText('Permanent · Built in');
+    await expect(conversation).toContainText(
+      'Three work streams are active. One needs your attention.',
+    );
     await expect(window.getByText('Your workspace is ready.')).toHaveCount(0);
   } finally {
     await electronApp.close();

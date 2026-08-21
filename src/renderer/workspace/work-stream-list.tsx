@@ -3,7 +3,7 @@ import { Pin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 import { Avatar } from './avatar';
-import type { WorkStream } from './scenario';
+import type { WorkStream, WorkStreamId } from './scenario';
 
 const statusStyles: Record<WorkStream['status'], string> = {
   Monitoring: 'text-sky-700',
@@ -17,7 +17,7 @@ export function WorkStreamList({
   selectedWorkStreamId,
   workStreams,
 }: {
-  selectedWorkStreamId: string;
+  selectedWorkStreamId: WorkStreamId;
   workStreams: WorkStream[];
 }) {
   return (
@@ -37,7 +37,7 @@ export function WorkStreamList({
             Work streams
           </h1>
           <span className="pb-0.5 text-[11px] font-medium text-slate-500">
-            5 conversations
+            {workStreams.length} conversations
           </span>
         </div>
       </header>
@@ -80,7 +80,7 @@ export function WorkStreamList({
                     <p className="min-w-0 flex-1 truncate text-[11px] text-slate-500">
                       {workStream.preview}
                     </p>
-                    {selected && (
+                    {workStream.permanent && (
                       <Pin
                         aria-label="Permanent conversation"
                         className="size-3.5 shrink-0 text-sky-600"

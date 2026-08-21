@@ -18,8 +18,15 @@ export type WorkStreamStatus =
   | 'At Risk'
   | 'Completed';
 
+export type WorkStreamId =
+  | 'chief-of-staff'
+  | 'competitor-brief'
+  | 'invoice-reconciliation'
+  | 'onboarding-audit'
+  | 'renewal-review';
+
 export type WorkStream = {
-  id: string;
+  id: WorkStreamId;
   title: string;
   accountableOwner: string;
   preview: string;
@@ -27,6 +34,8 @@ export type WorkStream = {
   status: WorkStreamStatus;
   initials: string;
   avatar: 'blue' | 'violet' | 'emerald' | 'amber';
+  permanent: boolean;
+  builtIn: boolean;
   unread?: number;
 };
 
@@ -39,13 +48,18 @@ export type BriefingMetric = {
 export type FocusItem = {
   title: string;
   detail: string;
-  status: string;
+  status: WorkStreamStatus;
   tone: 'attention' | 'progress' | 'risk';
 };
 
 export type ChiefOfStaffBriefing = {
+  dateLabel: string;
+  messageTimestamp: string;
   greeting: string;
   summary: string;
+  supervisionSummary: string;
+  contextSummary: string;
+  closingNote: string;
   metrics: BriefingMetric[];
   focusItems: FocusItem[];
   nextMilestone: string;
@@ -53,7 +67,7 @@ export type ChiefOfStaffBriefing = {
 
 export type WorkspaceScenario = {
   selectedViewId: WorkspaceViewId;
-  selectedWorkStreamId: string;
+  selectedWorkStreamId: WorkStreamId;
   views: WorkspaceView[];
   workStreams: WorkStream[];
   briefing: ChiefOfStaffBriefing;
@@ -79,6 +93,8 @@ export const executiveWorkspaceScenario: WorkspaceScenario = {
       status: 'Monitoring',
       initials: 'CS',
       avatar: 'blue',
+      permanent: true,
+      builtIn: true,
       unread: 1,
     },
     {
@@ -90,6 +106,8 @@ export const executiveWorkspaceScenario: WorkspaceScenario = {
       status: 'Needs Approval',
       initials: 'SC',
       avatar: 'violet',
+      permanent: false,
+      builtIn: false,
     },
     {
       id: 'invoice-reconciliation',
@@ -100,6 +118,8 @@ export const executiveWorkspaceScenario: WorkspaceScenario = {
       status: 'Working',
       initials: 'LE',
       avatar: 'emerald',
+      permanent: false,
+      builtIn: false,
     },
     {
       id: 'onboarding-audit',
@@ -110,6 +130,8 @@ export const executiveWorkspaceScenario: WorkspaceScenario = {
       status: 'At Risk',
       initials: 'HA',
       avatar: 'amber',
+      permanent: false,
+      builtIn: false,
     },
     {
       id: 'renewal-review',
@@ -120,11 +142,19 @@ export const executiveWorkspaceScenario: WorkspaceScenario = {
       status: 'Completed',
       initials: 'HA',
       avatar: 'amber',
+      permanent: false,
+      builtIn: false,
     },
   ],
   briefing: {
+    dateLabel: 'Today',
+    messageTimestamp: '9:08 AM',
     greeting: 'Good morning.',
     summary: 'Three work streams are active. One needs your attention.',
+    supervisionSummary: 'Supervising every work stream',
+    contextSummary: 'Monitoring all active Routed Requests',
+    closingNote:
+      'I’m supervising routine Follow-through and will bring back only matters that need your Approval or judgment.',
     metrics: [
       { label: 'Needs you', value: 1, tone: 'attention' },
       { label: 'Working', value: 2, tone: 'default' },
